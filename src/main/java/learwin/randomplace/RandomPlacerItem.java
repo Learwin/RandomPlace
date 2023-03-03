@@ -1,5 +1,9 @@
 package learwin.randomplace;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
@@ -10,10 +14,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 public class RandomPlacerItem extends Item {
 
@@ -60,24 +60,21 @@ public class RandomPlacerItem extends Item {
     }
 
     @Override
-    public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ) {
+    public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side,
+            float hitX, float hitY, float hitZ) {
 
-        if (world.isRemote)
-            return false;
+        if (world.isRemote) return false;
         Random random = new Random();
         List<ItemStack> currentBlocks = new ArrayList<>();
 
         int useSlots = 9;
-        if (useWholeInventory)
-            useSlots = 36;
+        if (useWholeInventory) useSlots = 36;
         for (int i = 0; i < useSlots; i++) {
             ItemStack selectedStack = player.inventory.getStackInSlot(i);
-            if (selectedStack != null && selectedStack.getItem() instanceof ItemBlock)
-                currentBlocks.add(selectedStack);
+            if (selectedStack != null && selectedStack.getItem() instanceof ItemBlock) currentBlocks.add(selectedStack);
         }
 
-        if (currentBlocks.size() <= 0)
-            return false;
+        if (currentBlocks.size() <= 0) return false;
 
         ItemStack stackToPlace = currentBlocks.get(random.nextInt(currentBlocks.size()));
 
@@ -108,13 +105,22 @@ public class RandomPlacerItem extends Item {
 
         if (world.blockExists(x1, y1, z1)) {
             final Block block = world.getBlock(x1, y1, z1);
-            if (!block.isAir(world, x1, y1, z1)
-                && !block.isReplaceable(world, x1, y1, z1))
-                return false;
+            if (!block.isAir(world, x1, y1, z1) && !block.isReplaceable(world, x1, y1, z1)) return false;
         }
 
         Block block = ((ItemBlock) stackToPlace.getItem()).field_150939_a;
-        ((ItemBlock) stackToPlace.getItem()).placeBlockAt(stackToPlace, player, world, x1, y1, z1, side, hitX, hitY, hitZ, block.onBlockPlaced(world, x1, y1, z1, side, hitX, hitY, hitZ, stackToPlace.getItemDamage()));
+        ((ItemBlock) stackToPlace.getItem()).placeBlockAt(
+                stackToPlace,
+                player,
+                world,
+                x1,
+                y1,
+                z1,
+                side,
+                hitX,
+                hitY,
+                hitZ,
+                block.onBlockPlaced(world, x1, y1, z1, side, hitX, hitY, hitZ, stackToPlace.getItemDamage()));
         if (!player.capabilities.isCreativeMode) {
             consumeInventoryItem(stackToPlace.getItem(), stackToPlace.getItemDamage(), player.inventory.mainInventory);
             player.inventory.markDirty();
@@ -136,8 +142,7 @@ public class RandomPlacerItem extends Item {
 
     public boolean consumeInventoryItem(Item itemIn, int metaData, ItemStack[] playerInv) {
         int i = getSlotOfItem(itemIn, metaData, playerInv);
-        if (i < 0)
-            return false;
+        if (i < 0) return false;
         else {
             if (--playerInv[i].stackSize <= 0) {
                 playerInv[i] = null;
@@ -157,6 +162,6 @@ public class RandomPlacerItem extends Item {
         nbt.setBoolean(NBT_USEWHOLEINV_TAG, useWholeInventory);
         info = StatCollector.translateToLocal("info.placer." + useWholeInventory);
 
-        return super.getItemStackDisplayName(stackIn) +" " + info;
+        return super.getItemStackDisplayName(stackIn) + " " + info;
     }
 }

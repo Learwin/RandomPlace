@@ -3,7 +3,7 @@
 	"modList": [{
 		"modid": "${modId}",
 		"name": "${modName}",
-		"description": "A mod that adds an item that allows to randomly place blocks from your hotbar inspired by the trowel from Quark",
+		"description": "A mod that adds an item that allows to randomly place blocks from your hotbar or inventory inspired by the Trowel from Quark",
 		"version": "${modVersion}",
 		"mcversion": "${minecraftVersion}",
 		"url": "",
