@@ -7,6 +7,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -15,8 +17,12 @@ import java.util.Random;
 
 public class RandomPlacerItem extends Item {
 
+    private boolean useWholeInventory = false;
+    private static final String NBT_USEWHOLEINV_TAG = "useWholeInventory";
+
     public RandomPlacerItem() {
         setCreativeTab(CreativeTabs.tabTools).setMaxStackSize(1);
+        useWholeInventory = false;
     }
 
     @Override
@@ -30,8 +36,27 @@ public class RandomPlacerItem extends Item {
     }
 
     @Override
+    public boolean hasEffect(ItemStack p_77636_1_) {
+        return useWholeInventory;
+    }
+
+    @Override
     public boolean isFull3D() {
         return true;
+    }
+
+    @Override
+    public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer player) {
+        if (!worldIn.isRemote && player.isSneaking()) {
+            NBTTagCompound nbt = itemStackIn.getTagCompound();
+            useWholeInventory = !useWholeInventory;
+            if (nbt == null) {
+                nbt = new NBTTagCompound();
+                itemStackIn.setTagCompound(nbt);
+            }
+            nbt.setBoolean(NBT_USEWHOLEINV_TAG, useWholeInventory);
+        }
+        return itemStackIn;
     }
 
     @Override
@@ -42,7 +67,10 @@ public class RandomPlacerItem extends Item {
         Random random = new Random();
         List<ItemStack> currentBlocks = new ArrayList<>();
 
-        for (int i = 0; i < 9; i++) {
+        int useSlots = 9;
+        if (useWholeInventory)
+            useSlots = 36;
+        for (int i = 0; i < useSlots; i++) {
             ItemStack selectedStack = player.inventory.getStackInSlot(i);
             if (selectedStack != null && selectedStack.getItem() instanceof ItemBlock)
                 currentBlocks.add(selectedStack);
@@ -118,4 +146,17 @@ public class RandomPlacerItem extends Item {
         }
     }
 
+    @Override
+    public String getItemStackDisplayName(ItemStack stackIn) {
+        NBTTagCompound nbt = stackIn.getTagCompound();
+        String info = "";
+        if (nbt == null) {
+            nbt = new NBTTagCompound();
+            stackIn.setTagCompound(nbt);
+        }
+        nbt.setBoolean(NBT_USEWHOLEINV_TAG, useWholeInventory);
+        info = StatCollector.translateToLocal("info.placer." + useWholeInventory);
+
+        return super.getItemStackDisplayName(stackIn) +" " + info;
+    }
 }

@@ -1,1 +1,4 @@
 item.randomPlacer.name=Random Block Placer
+
+info.placer.true=(Use whole Inventory)
+info.placer.false=(Use only Hotbar)
