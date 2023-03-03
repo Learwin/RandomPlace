@@ -1,14 +1,12 @@
 package learwin.randomplace;
 
+import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -27,14 +25,24 @@ public class RandomPlacerItem extends Item {
     }
 
     @Override
+    public boolean shouldRotateAroundWhenRendering() {
+        return true;
+    }
+
+    @Override
+    public boolean isFull3D() {
+        return true;
+    }
+
+    @Override
     public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ) {
+
         if (world.isRemote)
             return false;
         Random random = new Random();
-        InventoryPlayer inventory = player.inventory;
         List<ItemStack> currentBlocks = new ArrayList<>();
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 9; i++) {
             ItemStack selectedStack = player.inventory.getStackInSlot(i);
             if (selectedStack != null && selectedStack.getItem() instanceof ItemBlock)
                 currentBlocks.add(selectedStack);
@@ -44,7 +52,6 @@ public class RandomPlacerItem extends Item {
             return false;
 
         ItemStack stackToPlace = currentBlocks.get(random.nextInt(currentBlocks.size()));
-        int stackSize = stackToPlace.stackSize;
 
         int x1 = x;
         int y1 = y;
@@ -70,14 +77,45 @@ public class RandomPlacerItem extends Item {
                 break;
             default:
         }
-        ((ItemBlock) stackToPlace.getItem()).placeBlockAt(stackToPlace, player, world, x1, y1, z1, side, hitX, hitY, hitZ, stackToPlace.getItemDamage());
-        if (!player.capabilities.isCreativeMode) {
-            if (stackToPlace.stackSize - (stackSize - 1) >= 1)
-                stackToPlace.stackSize = stackSize - 1;
-            if (stackToPlace.stackSize - (stackSize - 1) <= 0)
-                stackToPlace = null;
+
+        if (world.blockExists(x1, y1, z1)) {
+            final Block block = world.getBlock(x1, y1, z1);
+            if (!block.isAir(world, x1, y1, z1)
+                && !block.isReplaceable(world, x1, y1, z1))
+                return false;
         }
+
+        Block block = ((ItemBlock) stackToPlace.getItem()).field_150939_a;
+        ((ItemBlock) stackToPlace.getItem()).placeBlockAt(stackToPlace, player, world, x1, y1, z1, side, hitX, hitY, hitZ, block.onBlockPlaced(world, x1, y1, z1, side, hitX, hitY, hitZ, stackToPlace.getItemDamage()));
+        if (!player.capabilities.isCreativeMode) {
+            consumeInventoryItem(stackToPlace.getItem(), stackToPlace.getItemDamage(), player.inventory.mainInventory);
+            player.inventory.markDirty();
+            player.inventoryContainer.detectAndSendChanges();
+        }
+
+        world.playSoundEffect(x1, y1, z1, block.stepSound.getBreakSound(), 1f, block.stepSound.getPitch());
+
         return true;
+    }
+
+    private int getSlotOfItem(Item itemIn, int metaData, ItemStack[] playerInv) {
+        for (int i = 0; i < playerInv.length; ++i) {
+            if (playerInv[i] != null && playerInv[i].getItem() == itemIn && playerInv[i].getItemDamage() == metaData)
+                return i;
+        }
+        return -1;
+    }
+
+    public boolean consumeInventoryItem(Item itemIn, int metaData, ItemStack[] playerInv) {
+        int i = getSlotOfItem(itemIn, metaData, playerInv);
+        if (i < 0)
+            return false;
+        else {
+            if (--playerInv[i].stackSize <= 0) {
+                playerInv[i] = null;
+            }
+            return true;
+        }
     }
 
 }
