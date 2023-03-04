@@ -47,7 +47,7 @@ public class RandomPlacerItem extends Item {
 
     @Override
     public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer player) {
-        if (!worldIn.isRemote && player.isSneaking()) {
+        if (player.isSneaking()) {
             NBTTagCompound nbt = itemStackIn.getTagCompound();
             useWholeInventory = !useWholeInventory;
             if (nbt == null) {
